@@ -1,0 +1,13 @@
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+
+# Ecossistema Kubernetes - A forma correta
+kube = { version = "0.91.0", features = ["runtime", "derive"] }
+k8s-openapi = { version = "0.22.0", features = ["v1_28"] }
