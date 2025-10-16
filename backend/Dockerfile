@@ -11,6 +11,9 @@ COPY Cargo.toml Cargo.lock ./
 # Cria diretório src e um main.rs dummy para compilar dependências
 RUN mkdir -p src && echo "fn main() {}" > src/main.rs
 
+# Habilita o modo offline do SQLx para não precisar de banco durante build
+ENV SQLX_OFFLINE=true
+
 # Constrói apenas as dependências, criando a camada de cache.
 RUN cargo build --release
 
@@ -21,6 +24,9 @@ RUN rm -f target/release/deps/backend*
 # Se apenas o seu código mudar, o Docker começará a reconstruir a partir daqui,
 # o que é muito mais rápido.
 COPY ./src ./src
+
+# Copia os metadados do SQLx para compilação offline
+COPY ./.sqlx ./.sqlx
 
 # Força recompilação do binário com o código real
 RUN touch src/main.rs

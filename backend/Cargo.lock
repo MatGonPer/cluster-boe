@@ -171,11 +171,13 @@ name = "backend"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "base64ct",
  "bcrypt",
  "dotenvy",
  "k8s-openapi",
  "kube",
  "serde",
+ "serde_json",
  "sqlx",
  "tokio",
 ]
