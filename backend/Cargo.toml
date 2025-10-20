@@ -15,3 +15,5 @@ bcrypt = "0.15"
 dotenvy = "0.15"
 base64ct = "1.6"
 validator = { version = "0.18", features = ["derive"] }
+jsonwebtoken = "9"
+chrono = { version = "0.4", features = ["serde"] }

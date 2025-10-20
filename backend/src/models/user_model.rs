@@ -14,3 +14,22 @@ pub struct UserResponse {
     pub id: i32,
     pub email: String,
 }
+
+#[derive(Deserialize, Validate)]
+pub struct LoginRequest {
+    #[validate(email(message = "O formato de e-mail é inválido."))]
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Serialize)]
+pub struct LoginResponse {
+   pub token: String, 
+}
+
+// estrutura interna para os dados que vão dentro do JWT (Claims)
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Claims {
+    pub sub: i32,
+    pub exp: usize,
+}

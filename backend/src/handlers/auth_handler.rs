@@ -1,12 +1,16 @@
-use crate::models::user_model::{RegisterRequest, UserResponse};
+use crate::models::user_model::{RegisterRequest, UserResponse, LoginRequest, LoginResponse, Claims};
 use crate::errors::AppError;
 use axum::{extract::State, http::StatusCode, response::Json};
 use sqlx::PgPool;
 use std::sync::Arc;
 use validator::Validate;
+use jsonwebtoken::{encode, EncodingKey, Header};
+use chrono::{Utc, Duration};
 
 pub struct AppState {
     pub db_pool: PgPool,
+    pub jwt_secret: String,
+    pub token_duration_seconds: i64,
 }
 
 pub async fn register_user(State(state): State<Arc<AppState>>, Json(payload): Json<RegisterRequest>,) -> Result<(StatusCode, Json<UserResponse>), AppError> {
@@ -53,4 +57,76 @@ pub async fn register_user(State(state): State<Arc<AppState>>, Json(payload): Js
         },
         Err(_) => Err(AppError::InternalServerError("Falha ao criar o usuário.".to_string())),
     }
+}
+
+pub async fn login_user(State(state): State<Arc<AppState>>, Json(payload): Json<LoginRequest>) -> Result<Json<LoginResponse>, AppError> {
+    // verifica formato do email
+    if let Err(validation_errors) = payload.validate() {
+        return Err(AppError::BadRequest(format!("Dados de login inválidos: {}", validation_errors)));
+    }
+
+    let email = payload.email.trim();
+    let password_attempt = payload.password.trim();
+
+    if email.is_empty() || password_attempt.is_empty() {
+        return Err(AppError::BadRequest("Email e senha são obrigatórios.".to_string()));
+    }
+
+    let email_normalized = email.to_lowercase();
+
+    let user_record = sqlx::query!("SELECT id, password_hash FROM users WHERE email = $1", email_normalized).fetch_optional(&state.db_pool).await
+        .map_err(|e| {
+            // log apenas para produção
+            eprintln!("Erro de banco ao buscar usuário: {}", e);
+            AppError::InternalServerError("Erro ao consultar o banco de dados.".to_string())
+    })?;
+
+    let user = match user_record {
+        Some(record) => record,
+        None => return Err(AppError::BadRequest("Credenciais inválidas.".to_string())),
+    };
+
+    let stored_hash = user.password_hash.clone();
+    let password_attempt_clone = password_attempt.to_string();
+
+    let is_valid_password = tokio::task::spawn_blocking(move || {
+        bcrypt::verify(&password_attempt_clone, &stored_hash)
+    })
+    .await
+    .map_err(|e| {
+        // log apenas para produção
+        eprintln!("Erro na task de verificação de senha: {}", e);
+        AppError::InternalServerError("Falha no processamento interno.".to_string())
+    })?
+    .map_err(|e| {
+        // log apenas para produção
+        eprintln!("Erro no bcrypt::verify: {}", e);
+        AppError::InternalServerError("Falha ao verificar a senha.".to_string())
+    })?;
+
+    if !is_valid_password {
+        return Err(AppError::BadRequest("Credenciais inválidas".to_string()));
+    }
+
+    let now = Utc::now();
+    let expires_at = now + Duration::seconds(state.token_duration_seconds);
+
+    let claims = Claims {
+        sub: user.id,
+        exp: expires_at.timestamp() as usize,
+    };
+
+    let token = encode (
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(state.jwt_secret.as_ref()),
+    )
+    .map_err(|e| {
+        // log apenas para produção
+        eprintln!("Erro ao gerar JWT: {}", e);
+        AppError::InternalServerError("Falha ao gerar o token de autenticação.".to_string())
+    })?;
+
+    let response = LoginResponse { token };
+    Ok(Json(response))
 }
