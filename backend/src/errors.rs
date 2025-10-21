@@ -8,6 +8,8 @@ pub enum AppError {
     Conflict(String),
     // erro para falhas internas no servidor (500)
     InternalServerError(String),
+    // erro de autenticação/autorização
+    Unauthorized(String),
 }
 
 impl IntoResponse for AppError {
@@ -16,10 +18,10 @@ impl IntoResponse for AppError {
             AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg),
             AppError::Conflict(msg) => (StatusCode::CONFLICT, msg),
             AppError::InternalServerError(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
+            AppError::Unauthorized(msg) => (StatusCode::UNAUTHORIZED, msg),
         };
 
         let body = Json(json!({ "error": error_message }));
-
         (status, body).into_response()
     }
 }

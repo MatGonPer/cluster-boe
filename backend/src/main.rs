@@ -2,6 +2,7 @@ mod handlers;
 mod models;
 mod router;
 mod errors;
+mod middleware;
 
 use handlers::auth_handler::AppState;
 use sqlx::PgPool;
