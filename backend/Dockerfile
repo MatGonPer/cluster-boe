@@ -5,6 +5,8 @@ FROM rustlang/rust:nightly-bookworm-slim AS builder
 # Cria nosso diretório de trabalho.
 WORKDIR /app
 
+RUN cargo install sqlx-cli --no-default-features --features rustls,postgres
+
 # Copia APENAS os arquivos de manifesto de dependências.
 COPY Cargo.toml Cargo.lock ./
 
@@ -43,6 +45,8 @@ WORKDIR /app
 
 # Copia APENAS o executável final do estágio de build.
 COPY --from=builder /app/target/release/backend .
+COPY --from=builder /usr/local/cargo/bin/sqlx /usr/local/bin/sqlx
+COPY migrations ./migrations
 
 EXPOSE 3000
 
