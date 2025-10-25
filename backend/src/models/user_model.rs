@@ -27,9 +27,17 @@ pub struct LoginResponse {
    pub token: String, 
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, sqlx::Type)]
+#[sqlx(type_name = "user_role", rename_all = "lowercase")]
+pub enum UserRole {
+    User,
+    Admin,
+}
+
 // estrutura interna para os dados que vão dentro do JWT (Claims)
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: i32,
     pub exp: usize,
+    pub role: UserRole,
 }
