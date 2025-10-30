@@ -191,6 +191,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "tokio",
+ "tower-http",
  "validator",
 ]
 
