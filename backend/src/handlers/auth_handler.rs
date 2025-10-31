@@ -1,11 +1,13 @@
 use crate::models::user_model::{RegisterRequest, UserResponse, LoginRequest, LoginResponse, UserRole, Claims};
 use crate::errors::AppError;
 use axum::{extract::State, http::StatusCode, response::Json};
+use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
+use time::Duration as TimeDuration;
 use sqlx::PgPool;
 use std::sync::Arc;
 use validator::Validate;
 use jsonwebtoken::{encode, EncodingKey, Header};
-use chrono::{Utc, Duration};
+use chrono::{Utc};
 
 pub struct AppState {
     pub db_pool: PgPool,
@@ -14,7 +16,6 @@ pub struct AppState {
 }
 
 pub async fn register_user(State(state): State<Arc<AppState>>, Json(payload): Json<RegisterRequest>,) -> Result<(StatusCode, Json<UserResponse>), AppError> {
-    // validação de email e senha, verifica apenas o formato do email e tamanho da senha
     if let Err(validation_errors) = payload.validate() {
         return Err(AppError::BadRequest(format!("Dados de entrada inválidos: {}", validation_errors)))
     }
@@ -59,8 +60,11 @@ pub async fn register_user(State(state): State<Arc<AppState>>, Json(payload): Js
     }
 }
 
-pub async fn login_user(State(state): State<Arc<AppState>>, Json(payload): Json<LoginRequest>) -> Result<Json<LoginResponse>, AppError> {
-    // verifica formato do email
+pub async fn login_user(
+    State(state): State<Arc<AppState>>, 
+    jar: CookieJar, 
+    Json(payload): Json<LoginRequest>
+) -> Result<(CookieJar, (StatusCode, Json<serde_json::Value>)), AppError> {
     if let Err(validation_errors) = payload.validate() {
         return Err(AppError::BadRequest(format!("Dados de login inválidos: {}", validation_errors)));
     }
@@ -113,14 +117,12 @@ pub async fn login_user(State(state): State<Arc<AppState>>, Json(payload): Json<
     }
 
     let now = Utc::now();
-    let expires_at = now + Duration::seconds(state.token_duration_seconds);
-
+    let expires_at = now + chrono::Duration::seconds(state.token_duration_seconds);
     let claims = Claims {
         sub: user.id,
         exp: expires_at.timestamp() as usize,
         role: user.role,
     };
-
     let token = encode (
         &Header::default(),
         &claims,
@@ -132,6 +134,17 @@ pub async fn login_user(State(state): State<Arc<AppState>>, Json(payload): Json<
         AppError::InternalServerError("Falha ao gerar o token de autenticação.".to_string())
     })?;
 
-    let response = LoginResponse { token };
-    Ok(Json(response))
+    let token_cookie = Cookie::build(("authToken", token.clone()))
+        .path("/api")
+        .max_age(TimeDuration::seconds(state.token_duration_seconds))
+        .same_site(SameSite::Strict)
+        // Secure false apenas para ambiente de desenvolvimento, pois para ser true necessita
+        // obrigatoriamente ser protocolo HTTPS
+        .secure(false)
+        .http_only(true)
+        .clone();
+
+    let new_jar = jar.add(token_cookie);
+
+    Ok((new_jar, (StatusCode::OK, Json(serde_json::json!({"status": "sucess"})))))
 }

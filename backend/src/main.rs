@@ -7,8 +7,8 @@ mod middleware;
 use handlers::auth_handler::AppState;
 use sqlx::PgPool;
 use std::sync::Arc;
-use tower_http::cors::{CorsLayer, Any};
-use axum::http::Method;
+use tower_http::cors::CorsLayer;
+use axum::http::{HeaderValue, Method, header::{self, ACCESS_CONTROL_ALLOW_CREDENTIALS}};
 
 #[tokio::main]
 async fn main() {
@@ -27,9 +27,15 @@ async fn main() {
     });
     
     let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::PUT, Method::DELETE])
-        .allow_headers(Any);
+        .allow_origin([
+            //Necessário alterar posteriormente regras de CORS na fase de produção!
+            "http://localhost:80".parse::<HeaderValue>().unwrap(),
+            //Endereço para npm rum, apenas para ambiente de desenvolvimento!
+            "http://localhost:5173".parse::<HeaderValue>().unwrap(),
+        ])
+        .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::PUT, Method::DELETE, Method::OPTIONS])
+        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION])
+        .allow_credentials(true);
 
     let app = router::create_router(app_state)
         .layer(cors);
