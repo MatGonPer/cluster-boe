@@ -1,4 +1,4 @@
-use crate::models::user_model::{RegisterRequest, UserResponse, LoginRequest, LoginResponse, Claims};
+use crate::models::user_model::{RegisterRequest, UserResponse, LoginRequest, LoginResponse, UserRole, Claims};
 use crate::errors::AppError;
 use axum::{extract::State, http::StatusCode, response::Json};
 use sqlx::PgPool;
@@ -74,7 +74,11 @@ pub async fn login_user(State(state): State<Arc<AppState>>, Json(payload): Json<
 
     let email_normalized = email.to_lowercase();
 
-    let user_record = sqlx::query!("SELECT id, password_hash FROM users WHERE email = $1", email_normalized).fetch_optional(&state.db_pool).await
+    let user_record = sqlx::query!(
+        "SELECT id, password_hash, role as \"role: UserRole\" FROM users WHERE email = $1",
+        email_normalized)
+        .fetch_optional(&state.db_pool)
+        .await
         .map_err(|e| {
             // log apenas para produção
             eprintln!("Erro de banco ao buscar usuário: {}", e);
@@ -114,6 +118,7 @@ pub async fn login_user(State(state): State<Arc<AppState>>, Json(payload): Json<
     let claims = Claims {
         sub: user.id,
         exp: expires_at.timestamp() as usize,
+        role: user.role,
     };
 
     let token = encode (
