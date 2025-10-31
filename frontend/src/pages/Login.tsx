@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
-export default function Register() {
+export default function Login() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -12,13 +11,8 @@ export default function Register() {
     event.preventDefault();
     setError(null);
 
-    if (password !== confirmPassword) {
-      setError("As senhas não coincidem.");
-      return;
-    }
-    
     try {
-      const response = await fetch("http://localhost:3000/api/auth/register", {
+      const response = await fetch("http://localhost:3000/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -30,21 +24,23 @@ export default function Register() {
       });
 
       if (response.ok) {
-        console.log("Registro bem-sucedido.");
-        navigate("/login");
+        const data = await response.json();
+        localStorage.setItem("acess_token", data.token);
+        console.log("Login bem-sucedido, token armazenado.");
+        navigate("/");   
       } else {
         const errorData = await response.json();
-        setError(errorData.error || "Falha no registro.");
+        setError(errorData.error || "Falha no login. Verifique suas credenciais.");
       }
-    } catch (err) {
+  } catch (err) {
       console.error("Erro de rede:", err);
-      setError("Não foi possível conectar-se ao servidor.");
+      setError("Não foi possível conectar ao servidor.");
     }
-  };
+};
 
 return (
         <div>
-            <h2>Criar Conta</h2>
+            <h2>Login</h2>
             
             <form onSubmit={handleSubmit}>
                 <div>
@@ -65,29 +61,17 @@ return (
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        minLength={12}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="confirmPassword">Confirme sua Senha:</label>
-                    <input
-                        id="confirmPassword"
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                        minLength={12}
                     />
                 </div>
                 
                 {error && <p style={{ color: 'red' }}>{error}</p>}
                 
-                <button type="submit">Registar</button>
+                <button type="submit">Entrar</button>
             </form>
 
-            <hr /> 
-            
-            <p>Já tem uma conta? <Link to="/login">Entre agora!</Link></p>
+            <hr />
+
+            <p>Não tem uma conta? <Link to="/register">Registe-se agora!</Link></p>
             <p><Link to="/forgot-password">Esqueceu sua senha?</Link></p>
         </div>
     );
