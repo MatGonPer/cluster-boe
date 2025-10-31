@@ -1,50 +1,51 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 
 export default function Register() {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
-
-    if (password !== confirmPassword) {
-      setError("As senhas não coincidem.");
-      return;
-    }
     
-    try {
-      const response = await fetch("http://localhost:3000/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email.trim(),
-          password: password.trim(),
-        }),
-      });
+    const [email, setEmail] = useState<string>('');
+    const [password, setPassword] = useState<string>('');
+    const [confirmPassword, setConfirmPassword] = useState<string>('');
+    const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
 
-      if (response.ok) {
-        console.log("Registro bem-sucedido.");
-        navigate("/login");
-      } else {
-        const errorData = await response.json();
-        setError(errorData.error || "Falha no registro.");
-      }
-    } catch (err) {
-      console.error("Erro de rede:", err);
-      setError("Não foi possível conectar-se ao servidor.");
-    }
-  };
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        setError(null);
 
-return (
+        if (password !== confirmPassword) {
+            setError('As senhas não coincidem.');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:3000/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    email: email.trim(), 
+                    password: password.trim(),
+                    confirm_password: confirmPassword.trim()
+                }),
+                credentials: 'include',
+            });
+
+            if (response.ok) {
+                console.log('Registo bem-sucedido!');
+                navigate('/login');
+            } else {
+                const errorData = await response.json();
+                setError(errorData.error || 'Falha no registo.');
+            }
+        } catch (err) {
+            console.error('Erro de rede:', err);
+            setError('Não foi possível conectar ao servidor.');
+        }
+    };
+
+    return (
         <div>
-            <h2>Criar Conta</h2>
+            <h1>Página de Registo</h1>
             
             <form onSubmit={handleSubmit}>
                 <div>
