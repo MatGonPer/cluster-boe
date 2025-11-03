@@ -37,8 +37,8 @@ export default function Login() {
     };
 
     return (
-        <div>
-            <h2>Login</h2>
+        <div className='text-end'>
+            <h2 className='font-bold'>Login</h2>
             
             <form onSubmit={handleSubmit}>
                 <div>
@@ -69,8 +69,8 @@ export default function Login() {
 
             <hr />
 
-            <p>Não tem uma conta? <Link to="/register">Registe-se agora!</Link></p>
-            <p><Link to="/forgot-password">Esqueceu sua senha?</Link></p>
+            <p className=''>Não tem uma conta? <Link to="/register">Registe-se agora!</Link></p>
+            <p className='underline'><Link to="/forgot-password">Esqueceu sua senha?</Link></p>
         </div>
     );
 }
