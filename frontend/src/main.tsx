@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 
 import Register from './pages/Register.tsx' 
 import Login from './pages/Login.tsx'
+import Forgot from './pages/Forgot.tsx'
 import './index.css'
 
 const router = createBrowserRouter([
@@ -22,7 +23,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/forgot-password",
-    element: <div>Página de Recuperação de Senha (a ser feita)</div>,
+    element: <Forgot />,
   },
 ]);
 
