@@ -94,7 +94,7 @@ export default function Login() {
                         <div className="mt-8 text-center">
                             <p className="text-base text-gray-500">
                                 Lembrou da senha? {' '}
-                                <Link to="/register" className="font-medium text-blue-600 hover:underline">
+                                <Link to="/login" className="font-medium text-blue-600 hover:underline">
                                     Faça Login!
                                 </Link>
                             </p>
