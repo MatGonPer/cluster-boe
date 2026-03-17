@@ -1,0 +1,18 @@
+ALTER TABLE projetos ALTER COLUMN github_url DROP NOT NULL;
+ALTER TABLE projetos ADD COLUMN capa_path VARCHAR(255);
+ALTER TABLE projetos ADD COLUMN lider_id INTEGER REFERENCES users(id) ON DELETE RESTRICT;
+DROP TABLE IF EXISTS projeto_aluno;
+
+CREATE TABLE IF NOT EXISTS projeto_integrantes (
+    id SERIAL PRIMARY KEY,
+    projeto_id INTEGER NOT NULL REFERENCES projetos(id) ON DELETE CASCADE,
+    nome VARCHAR(255) NOT NULL,
+    matricula VARCHAR(50) NOT NULL,
+    papel VARCHAR(50) NOT NULL DEFAULT 'aluno'
+);
+
+CREATE TABLE IF NOT EXISTS projeto_fotos (
+    id SERIAL PRIMARY KEY,
+    projeto_id INTEGER NOT NULL REFERENCES projetos(id) ON DELETE CASCADE,
+    caminho_imagem VARCHAR(255) NOT NULL
+);

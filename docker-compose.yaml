@@ -13,6 +13,8 @@ services:
       - JWT_EXPIRATION_SECONDS=${JWT_EXPIRATION_SECONDS}
     env_file:
       - .env
+    volumes:
+      - /etc/rancher/k3s/k3s.yaml:/root/.kube/config:ro
     depends_on:
       db:
         condition: service_healthy
@@ -26,7 +28,7 @@ services:
       dockerfile: Dockerfile
     container_name: frontend
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       - backend
     restart: unless-stopped
